@@ -44,7 +44,7 @@ Option [5] will display a heatmap describing the probability of a square being o
 
 CONTACT INFORMATION
 --------------------------------------------------------------------------------
-If you have any questions, feedback or if you experience any bugs or issues when running the program, feel free to contact me at jorleef@gmail.com
+If you have any questions, feedback or if you experience any bugs or issues when running the program, feel free to contact me at stadragondev@gmail.com.
 
 LICENSE
 --------------------------------------------------------------------------------
