@@ -47,7 +47,7 @@ Option [6] will replay games.
 
 UPDATE V1.1
 --------------------------------------------------------------------------------
-**17/03/2021** Implemented a replay function
+**17/03/2021** Implemented a replay function<br />
            Replaced "Data to Analyse" folder to "Replays" folder
 
 CONTACT INFORMATION
