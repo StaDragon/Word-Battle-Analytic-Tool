@@ -5,19 +5,21 @@
 
 __all__ = ["__title__", "__version__", "__author__", "__license__", "__copyright__"]
 __title__ = "Word Battle Analytic Tool"
-__version__ = "1"
+__version__ = "1.1"
 __author__ = "Jordan Memphis Leef"
 __license__ = "Freeware"
 __copyright__ = "Copyright (C) Jordan Memphis Leef"
 
-from typing import List, Dict, Tuple, Iterator
+from typing import List, Dict, Tuple, Iterator, Generator, Any
 from colorama import Fore, Style
 from itertools import islice
 from math import ceil
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+import itertools as it
 import seaborn as sns
 import pandas as pd
+import numpy as np
 import subprocess
 import os.path
 import msvcrt
@@ -34,7 +36,7 @@ SW_MAXIMISE = 3 # Set the command prompt to open in maximized window
 LOWER_LIMIT = 3 # The min board length
 UPPER_LIMIT = 15 # The max board length
 COMPUTER_PLAYER_NAME = "Computer" # To distinguish itself from human players
-LOCAL_DIR_DATA_TO_ANALYSE = "./Data To Analyse/" # The path to the "Data To Analyse" folder
+LOCAL_DIR_REPLAYS = "./Replays/" # The path to the "Replays" folder
 REPLAY_FILE_FORMAT = ".wbr" # The format for the replay files
 LETTER_VALUE = {"A": 3, "B": 9, "C": 8, "D": 7, "E": 1, "F": 8, "G": 8, "H": 5, "I": 5, "J": 10, "K": 10, "L": 7, "M": 8, "N": 5, "O": 4, "P": 9, "Q": 10, "R": 6, "S": 5, "T": 2, "U": 8, "V": 10, "W": 8, "X": 10, "Y": 9, "Z": 10} # The strength of each letter
 
@@ -123,7 +125,7 @@ def check_files() -> None:
     filename_list = []
 
     try:
-        file_list = os.listdir(LOCAL_DIR_DATA_TO_ANALYSE)
+        file_list = os.listdir(LOCAL_DIR_REPLAYS)
         filename_list += file_list
 
         if len(file_list) == 0:
@@ -134,13 +136,13 @@ def check_files() -> None:
             msvcrt.getch()
             main()
 
-        # Open every .wbr file within the 'Data To Analyse' folder
+        # Open every .wbr file within the 'Replays' folder
         for file in file_list:
             file = file[:-4]  # Remove the file extension
 
-            if os.path.isfile(f"{LOCAL_DIR_DATA_TO_ANALYSE}{file}{REPLAY_FILE_FORMAT}"):
+            if os.path.isfile(f"{LOCAL_DIR_REPLAYS}{file}{REPLAY_FILE_FORMAT}"):
                 try:
-                    with open(f"{LOCAL_DIR_DATA_TO_ANALYSE}{file}{REPLAY_FILE_FORMAT}") as f:
+                    with open(f"{LOCAL_DIR_REPLAYS}{file}{REPLAY_FILE_FORMAT}") as f:
                         bytes_data = f.read().splitlines()
                         data = ast.literal_eval("".join(map(chr, [int(i) for i in bytes_data])))
                         wbr_content = {"wbr_game_info": data}
@@ -238,11 +240,11 @@ def check_files() -> None:
     except FileNotFoundError:
         clear_screen(0)
         print(Fore.WHITE + Style.BRIGHT + f"{__title__} v{__version__} System Event")
-        print(Fore.RED + Style.BRIGHT + "Error: The 'Data To Analyse' folder cannot be found! This folder is now created.")
+        print(Fore.RED + Style.BRIGHT + "Error: The 'Replays' folder cannot be found! This folder is now created.")
 
         # Create the folder if it does not exist
         try:
-            os.makedirs('Data To Analyse')
+            os.makedirs('Replays')
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
@@ -394,23 +396,23 @@ def display_player_statistics() -> None:
     game_length = []
 
     try:
-        file_list = os.listdir(LOCAL_DIR_DATA_TO_ANALYSE)
+        file_list = os.listdir(LOCAL_DIR_REPLAYS)
 
         if len(file_list) == 0:
             clear_screen(0)
             print(Fore.WHITE + Style.BRIGHT + f"{__title__} v{__version__} System Event")
-            print(Fore.RED + Style.BRIGHT + "Error: The 'Data To Analyse' folder is empty!")
+            print(Fore.RED + Style.BRIGHT + "Error: The 'Replays' folder is empty!")
             print(Fore.WHITE + Style.BRIGHT + "Press any key to continue...")
             msvcrt.getch()
             clear_screen(0)
         else:
-            # Open every .wbr file within the 'Data To Analyse' folder
+            # Open every .wbr file within the 'Replays' folder
             for file in file_list:
                 file = file[:-4]  # Remove the file extension
 
-                if os.path.isfile(f"{LOCAL_DIR_DATA_TO_ANALYSE}{file}{REPLAY_FILE_FORMAT}"):
+                if os.path.isfile(f"{LOCAL_DIR_REPLAYS}{file}{REPLAY_FILE_FORMAT}"):
                     try:
-                        with open(f"{LOCAL_DIR_DATA_TO_ANALYSE}{file}{REPLAY_FILE_FORMAT}") as f:
+                        with open(f"{LOCAL_DIR_REPLAYS}{file}{REPLAY_FILE_FORMAT}") as f:
                             bytes_data = f.read().splitlines()
                             data = ast.literal_eval("".join(map(chr, [int(i) for i in bytes_data])))
                             wbr_content = {"wbr_game_info": data}
@@ -468,11 +470,11 @@ def display_player_statistics() -> None:
     except FileNotFoundError:
         clear_screen(0)
         print(Fore.WHITE + Style.BRIGHT + f"{__title__} v{__version__} System Event")
-        print(Fore.RED + Style.BRIGHT + "Error: The 'Data To Analyse' folder cannot be found! This folder is now created.")
+        print(Fore.RED + Style.BRIGHT + "Error: The 'Replays' folder cannot be found! This folder is now created.")
 
         # Create the folder if it does not exist
         try:
-            os.makedirs('Data To Analyse')
+            os.makedirs('Replays')
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
@@ -567,23 +569,23 @@ def display_letter_frequency_bar_graph() -> None:
     letter_list = []
 
     try:
-        file_list = os.listdir(LOCAL_DIR_DATA_TO_ANALYSE)
+        file_list = os.listdir(LOCAL_DIR_REPLAYS)
 
         if len(file_list) == 0:
             clear_screen(0)
             print(Fore.WHITE + Style.BRIGHT + f"{__title__} v{__version__} System Event")
-            print(Fore.RED + Style.BRIGHT + "Error: The 'Data To Analyse' folder is empty!")
+            print(Fore.RED + Style.BRIGHT + "Error: The 'Replays' folder is empty!")
             print(Fore.WHITE + Style.BRIGHT + "Press any key to continue...")
             msvcrt.getch()
             clear_screen(0)
         else:
-            # Open every .wbr file within the 'Data To Analyse' folder
+            # Open every .wbr file within the 'Replays' folder
             for file in file_list:
                 file = file[:-4] # Remove the file extension
 
-                if os.path.isfile(f"{LOCAL_DIR_DATA_TO_ANALYSE}{file}{REPLAY_FILE_FORMAT}"):
+                if os.path.isfile(f"{LOCAL_DIR_REPLAYS}{file}{REPLAY_FILE_FORMAT}"):
                     try:
-                        with open(f"{LOCAL_DIR_DATA_TO_ANALYSE}{file}{REPLAY_FILE_FORMAT}") as f:
+                        with open(f"{LOCAL_DIR_REPLAYS}{file}{REPLAY_FILE_FORMAT}") as f:
                             bytes_data = f.read().splitlines()
                             data = ast.literal_eval("".join(map(chr, [int(i) for i in bytes_data])))
                             wbr_content = {"wbr_game_info": data}
@@ -636,11 +638,11 @@ def display_letter_frequency_bar_graph() -> None:
     except FileNotFoundError:
         clear_screen(0)
         print(Fore.WHITE + Style.BRIGHT + f"{__title__} v{__version__} System Event")
-        print(Fore.RED + Style.BRIGHT + "Error: The 'Data To Analyse' folder cannot be found! This folder is now created.")
+        print(Fore.RED + Style.BRIGHT + "Error: The 'Replays' folder cannot be found! This folder is now created.")
 
         # Create the folder if it does not exist
         try:
-            os.makedirs('Data To Analyse')
+            os.makedirs('Replays')
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
@@ -685,23 +687,23 @@ def display_word_length_frequency_bar_graph() -> None:
     word_length_dict = {}
 
     try:
-        file_list = os.listdir(LOCAL_DIR_DATA_TO_ANALYSE)
+        file_list = os.listdir(LOCAL_DIR_REPLAYS)
 
         if len(file_list) == 0:
             clear_screen(0)
             print(Fore.WHITE + Style.BRIGHT + f"{__title__} v{__version__} System Event")
-            print(Fore.RED + Style.BRIGHT + "Error: The 'Data To Analyse' folder is empty!")
+            print(Fore.RED + Style.BRIGHT + "Error: The 'Replays' folder is empty!")
             print(Fore.WHITE + Style.BRIGHT + "Press any key to continue...")
             msvcrt.getch()
             clear_screen(0)
         else:
-            # Open every .wbr file within the 'Data To Analyse' folder
+            # Open every .wbr file within the 'Replays' folder
             for file in file_list:
                 file = file[:-4]  # Remove the file extension
 
-                if os.path.isfile(f"{LOCAL_DIR_DATA_TO_ANALYSE}{file}{REPLAY_FILE_FORMAT}"):
+                if os.path.isfile(f"{LOCAL_DIR_REPLAYS}{file}{REPLAY_FILE_FORMAT}"):
                     try:
-                        with open(f"{LOCAL_DIR_DATA_TO_ANALYSE}{file}{REPLAY_FILE_FORMAT}") as f:
+                        with open(f"{LOCAL_DIR_REPLAYS}{file}{REPLAY_FILE_FORMAT}") as f:
                             bytes_data = f.read().splitlines()
                             data = ast.literal_eval("".join(map(chr, [int(i) for i in bytes_data])))
                             wbr_content = {"wbr_game_info": data}
@@ -760,11 +762,11 @@ def display_word_length_frequency_bar_graph() -> None:
     except FileNotFoundError:
         clear_screen(0)
         print(Fore.WHITE + Style.BRIGHT + f"{__title__} v{__version__} System Event")
-        print(Fore.RED + Style.BRIGHT + "Error: The 'Data To Analyse' folder cannot be found! This folder is now created.")
+        print(Fore.RED + Style.BRIGHT + "Error: The 'Replays' folder cannot be found! This folder is now created.")
 
         # Create the folder if it does not exist
         try:
-            os.makedirs('Data To Analyse')
+            os.makedirs('Replays')
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
@@ -834,23 +836,23 @@ def display_square_usage_heatmap() -> None:
     board_size = None
 
     try:
-        file_list = os.listdir(LOCAL_DIR_DATA_TO_ANALYSE)
+        file_list = os.listdir(LOCAL_DIR_REPLAYS)
 
         if len(file_list) == 0:
             clear_screen(0)
             print(Fore.WHITE + Style.BRIGHT + f"{__title__} v{__version__} System Event")
-            print(Fore.RED + Style.BRIGHT + "Error: The 'Data To Analyse' folder is empty!")
+            print(Fore.RED + Style.BRIGHT + "Error: The 'Replays' folder is empty!")
             print(Fore.WHITE + Style.BRIGHT + "Press any key to continue...")
             msvcrt.getch()
             clear_screen(0)
         else:
-            # Open every .wbr file within the 'Data To Analyse' folder
+            # Open every .wbr file within the 'Replays' folder
             for file in file_list:
                 file = file[:-4] # Remove the file extension
 
-                if os.path.isfile(f"{LOCAL_DIR_DATA_TO_ANALYSE}{file}{REPLAY_FILE_FORMAT}"):
+                if os.path.isfile(f"{LOCAL_DIR_REPLAYS}{file}{REPLAY_FILE_FORMAT}"):
                     try:
-                        with open(f"{LOCAL_DIR_DATA_TO_ANALYSE}{file}{REPLAY_FILE_FORMAT}") as f:
+                        with open(f"{LOCAL_DIR_REPLAYS}{file}{REPLAY_FILE_FORMAT}") as f:
                             bytes_data = f.read().splitlines()
                             data = ast.literal_eval("".join(map(chr, [int(i) for i in bytes_data])))
                             wbr_content = {"wbr_game_info": data}
@@ -904,11 +906,11 @@ def display_square_usage_heatmap() -> None:
     except FileNotFoundError:
         clear_screen(0)
         print(Fore.WHITE + Style.BRIGHT + f"{__title__} v{__version__} System Event")
-        print(Fore.RED + Style.BRIGHT + "Error: The 'Data To Analyse' folder cannot be found! This folder is now created.")
+        print(Fore.RED + Style.BRIGHT + "Error: The 'Replays' folder cannot be found! This folder is now created.")
 
         # Create the folder if it does not exist
         try:
-            os.makedirs('Data To Analyse')
+            os.makedirs('Replays')
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
@@ -917,6 +919,676 @@ def display_square_usage_heatmap() -> None:
         msvcrt.getch()
         clear_screen(0)
 
+
+def open_replay() -> None:
+    """Open .wbr files to watch them."""
+    def run_replay(replay_info: dict, replay_speed: float) -> None:
+        """Run the replay file."""
+        board = Board()
+        board.create_board(replay_info['wbr_game_info'][0]['board_length'])
+        game_duration = replay_info['wbr_game_info'][0]['game_duration']
+        board.game_duration = game_duration
+        players = []
+
+        for player in replay_info['wbr_game_info'][1:]:
+            if player['player_name'] not in players:
+                players.append({"name": player['player_name'], "type": player['type'], "difficulty": player['difficulty']})
+
+        board.players = [dict(t) for t in {tuple(d.items()) for d in players}]
+        board.player = players[0]['name']
+
+        if players[0]['difficulty'] is not None:
+            board.player = f"{players[0]['name']} ({players[0]['difficulty']})"
+
+        board.game_counter = replay_info['wbr_game_info'][0]['game_number']
+        clear_screen(0)
+        board.display_game_title()
+        board.display_board()
+        print(f"Replay speed: {replay_speed}\nReplay file: {file}{REPLAY_FILE_FORMAT}\n")
+
+        for player in replay_info['wbr_game_info'][1:]:
+            event = player['event']
+            player_name = player['player_name']
+            player_type = player['type']
+            board.player = player_name
+
+            if player_type == "computer":
+                player_name = f"{player['player_name']} ({player['difficulty']})"
+
+            if event == 'RESIGNED':
+                clear_screen(1.5) # Do not delete!
+                board.display_game_title(False, False, True) # Do not delete!
+                board.display_board() # Do not delete!
+                print(f"Replay speed: {replay_speed}\nReplay file: {file}{REPLAY_FILE_FORMAT}\n") # Do not delete!
+                clear_screen(1.5)
+                board.display_game_title(False, False, True)
+            elif event == 'WON':
+                board.winner = player_name
+                clear_screen(0)
+                board.display_game_title(False, True)
+            elif event == 'PLAYING':
+                board.turn_counter += 1
+                board.selected_path = [tuple(i) for i in player['selected_path']]
+                board.place_word(player['word'])
+                board.previous_player = player_name
+                clear_screen(replay_speed)
+                board.display_game_title()
+            elif event == 'DRAW':
+                board.draw = True
+                clear_screen(1)
+                board.display_game_title(True)
+
+            board.display_board()
+            print(f"Replay speed: {replay_speed}\nReplay file: {file}{REPLAY_FILE_FORMAT}\n")
+
+        print("Replay finished, press any key to continue...")
+        msvcrt.getch()
+
+        while True:
+            clear_screen(0)
+            print(Fore.WHITE + Style.BRIGHT + "Replay menu\n[1] Watch again\n[2] Change speed and watch again\n[3] Open another file\n[4] Go back to main menu\n")
+
+            try:
+                selection = int(input((Fore.WHITE + Style.BRIGHT + "Selection: ")))
+                if selection == 1:
+                    run_replay(replay_info, replay_speed)
+                elif selection == 2:
+                    clear_screen(0)
+                    get_replay_speed(replay_info)
+                elif selection == 3:
+                    clear_screen(0)
+                    open_replay()
+                elif selection == 4:
+                    main()
+                else:
+                    pass
+            except ValueError:
+                pass
+
+    def get_replay_speed(replay_info: dict) -> None:
+        """Set how fast each turn cycles."""
+        try:
+            replay_speed = float(input("Replay speed. Type 0 to go back to main menu: "))
+            if replay_speed > 0:
+                run_replay(replay_info, replay_speed)
+            elif replay_speed == 0:
+                main()
+            else:
+                clear_screen(0)
+                get_replay_speed(replay_info)
+        except ValueError:
+            clear_screen(0)
+            get_replay_speed(replay_info)
+
+    while True:
+        file = input(Fore.WHITE + Style.BRIGHT + "Filename (Type 0 to go back to main menu): ")
+
+        if file == "0":
+            main()
+        elif file == "":
+            clear_screen(0)
+            print(Fore.WHITE + Style.BRIGHT + "Filename (Type 0 to go back to main menu): " + Fore.RED + Style.BRIGHT + "filename cannot be empty!")
+            print(Fore.WHITE + Style.BRIGHT + "Press any key to continue...")
+            msvcrt.getch()
+            clear_screen(0)
+        else:
+            # Create the folder if it does not exist
+            try:
+                os.makedirs('Replays')
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    raise
+
+            if os.path.isfile(f"{LOCAL_DIR_REPLAYS}{file}{REPLAY_FILE_FORMAT}"):
+                try:
+                    with open(f"{LOCAL_DIR_REPLAYS}{file}{REPLAY_FILE_FORMAT}") as f:
+                        bytes_data = f.read().splitlines()
+                        data = ast.literal_eval("".join(map(chr, [int(i) for i in bytes_data])))
+                        wbr_content = {"wbr_game_info": data}
+                        replay_info = json.dumps(wbr_content, indent=7)
+                        replay_info = json.loads(replay_info)
+
+                        if replay_info['wbr_game_info'][0]['game_number'] > 0 and replay_info['wbr_game_info'][0]['board_length'] > 0:
+                            clear_screen(0)
+                            get_replay_speed(replay_info)
+                        else:
+                            clear_screen(0)
+                            print(Fore.WHITE + Style.BRIGHT + "Filename (Type 0 to go back to main menu): " + Fore.RED + Style.BRIGHT + "File not found or file extension not supported! Only .wbr (Word Battle Replay) files are supported.")
+                            print(Fore.WHITE + Style.BRIGHT + "Press any key to continue...")
+                            msvcrt.getch()
+                            clear_screen(0)
+                except (KeyError, ValueError, SyntaxError, OverflowError):
+                    clear_screen(0)
+                    print(Fore.WHITE + Style.BRIGHT + "Filename (Type 0 to go back to main menu): " + Fore.RED + Style.BRIGHT + "File is corrupted or outdated and cannot be opened!")
+                    print(Fore.WHITE + Style.BRIGHT + "Press any key to continue...")
+                    msvcrt.getch()
+                    clear_screen(0)
+            else:
+                clear_screen(0)
+                print(Fore.WHITE + Style.BRIGHT + "Filename (Type 0 to go back to main menu): " + Fore.RED + Style.BRIGHT + "File not found or file extension not supported! Only .wbr (Word Battle Replay) files are supported.")
+                print(Fore.WHITE + Style.BRIGHT + "Press any key to continue...")
+                msvcrt.getch()
+                clear_screen(0)
+
+class Board:
+    """Create an board object."""
+    def __init__(self) -> None:
+        self.length = None # The length of the board
+        self.matrix = None # The 2D array of the board
+        self.colour_map = None # The colours for each cell
+        self.starting_position = None # The current starting position
+        self.paths = None # A collection of paths
+        self.paths_full = None # A collection of full paths
+        self.selected_path = None # The current selected path
+        self.players = None # The current player list
+        self.player = None # The current player
+        self.previous_player = None # the previous player in the previous turn
+        self.previous_selected_path = None # the previous path selected by the player
+        self.word = None # The current player's word
+        self.used_words = None # Record every words used
+        self.winner = None # The winner of the current game
+        self.draw = False # Draw state
+        self.game_counter = 0 # Game counter for each game
+        self.turn_counter = 0 # Game counter for each game
+        self.game_duration = 0 # Game Duration of the whole game
+
+    def create_board(self, length: int) -> None:
+        """Create the game board."""
+        self.length = length
+        self.matrix = np.full((self.length, self.length), " ", dtype='U1')
+        self.colour_map = self.set_colour_map()
+
+    def set_colour_map(self) -> Dict[Tuple[Any], Any]:
+        """Ini the colours for the board."""
+        cells = [coord for coord in it.product(*[range(r[0], r[1]) for r in zip([0, 0], [self.length, self.length])])]
+        colour = ["WHITE"] * self.length ** 2
+        return dict(zip(cells, colour))
+
+    def check_draw(self) -> None:
+        """Check for a draw."""
+        if " " not in self.matrix:
+            self.draw = True
+
+    def get_starting_position(self) -> int:
+        """Get the starting position of the player."""
+        self.display_game_title()
+        self.display_board()
+        self.check_draw()
+
+        if self.draw:
+            return 2
+
+        try:
+            # Split the input to get the coordinates
+            user_input = [int(n) for n in input(Fore.WHITE + Style.BRIGHT + "Starting Position: ").split(" ")]
+
+            if len(user_input) == 1:
+                if 0 not in user_input:
+                    clear_screen(0)
+                    self.display_game_title()
+                    self.display_board()
+                    print(Fore.WHITE + Style.BRIGHT + "Starting Position: " + Fore.RED + Style.BRIGHT + "Invalid coordinates!")
+                    clear_screen()
+                    return self.get_starting_position()
+                else:
+                    return 0
+            else:
+                if 0 in user_input:
+                    clear_screen(0)
+                    self.display_game_title()
+                    self.display_board()
+                    print(Fore.WHITE + Style.BRIGHT + "Starting Position: " + Fore.RED + Style.BRIGHT + "Invalid coordinates!")
+                    clear_screen()
+                    return self.get_starting_position()
+                else:
+                    if 0 < user_input[0] <= self.length and 0 < user_input[1] <= self.length:
+                        if user_input[0] == 1 and user_input[1] == user_input[0] or user_input[0] == 1 and user_input[1] > user_input[0] or user_input[1] == 1 and user_input[1] < user_input[0] or user_input[0] == self.length and user_input[1] == user_input[0] or user_input[0] == self.length and user_input[0] > user_input[1] or user_input[1] == self.length and user_input[1] > user_input[0]:
+                            self.starting_position = tuple([n - 1 for n in user_input])
+                            return 1
+                        else:
+                            clear_screen(0)
+                            self.display_game_title()
+                            self.display_board()
+                            print(Fore.WHITE + Style.BRIGHT + "Starting Position: " + Fore.RED + Style.BRIGHT + "Invalid coordinates!")
+                            clear_screen()
+                            return self.get_starting_position()
+                    else:
+                        clear_screen(0)
+                        self.display_game_title()
+                        self.display_board()
+                        print(Fore.WHITE + Style.BRIGHT + "Starting Position: " + Fore.RED + Style.BRIGHT + "Invalid coordinates!")
+                        clear_screen()
+                        return self.get_starting_position()
+        except (IndexError, ValueError):
+            clear_screen(0)
+            self.display_game_title()
+            self.display_board()
+            print(Fore.WHITE + Style.BRIGHT + "Starting Position: " + Fore.RED + Style.BRIGHT + "Invalid coordinates!")
+            clear_screen()
+            return self.get_starting_position()
+
+    def create_valid_paths(self) -> None:
+        """Generate paths based on the starting position. Check the list for paths that are full. Remove them if they are."""
+        # Convert the coordinates of the starting position to zero-based numbering
+        x = self.starting_position[0]
+        y = self.starting_position[1]
+
+        # Create a list of three paths
+        path1 = []
+        path2 = []
+        path3 = []
+
+        # Get coordinates for each path starting at corners
+        # Starting position at top left corner
+        if (x, y) == (0, 0):
+            for i in range(self.length):
+                # Path to top right corner
+                path1 += [(0, i)]
+
+                # Path to bottom right corner
+                path2 += [(i, i)]
+
+                # Path to bottom left corner
+                path3 += [(i, 0)]
+
+        # Starting position at top right corner
+        elif (x, y) == (0, self.length - 1):
+            for i in range(self.length):
+                # Path to top left corner
+                path1 += [(0, self.length - 1 - i)]
+
+                # Path to bottom left corner
+                path2 += [(i, self.length - 1 - i)]
+
+                # Path to bottom right corner
+                path3 += [(i, self.length - 1)]
+
+        # Starting position at bottom left corner
+        elif (x, y) == (self.length - 1, 0):
+            for i in range(self.length):
+                # Path to top left corner
+                path1 += [(self.length - 1 - i, 0)]
+
+                # Path to top right corner
+                path2 += [(self.length - 1 - i, i)]
+
+                # Path to bottom right corner
+                path3 += [(self.length - 1, i)]
+
+        # Starting position at bottom right corner
+        elif (x, y) == (self.length - 1, self.length - 1):
+            for i in range(self.length):
+
+                # Path to top right corner
+                path1 += [(i, self.length - 1)]
+
+                # Path to top left corner
+                path2 += [(i, i)]
+
+                # Path to bottom left corner
+                path3 += [(self.length - 1, i)]
+
+            # Reverse any path that may needs be
+            path1.reverse()
+            path2.reverse()
+            path3.reverse()
+
+        # Get coordinates for each path starting at edges
+        else:
+            # Starting position at top edge
+            if x == 0:
+                # Path to left edge
+                temp_x = x
+                temp_y = y
+
+                while temp_y >= 0:
+                    path1 += [(temp_x, temp_y)]
+                    temp_x += 1
+                    temp_y -= 1
+
+                # Path to bottom edge
+                for i in range(self.length):
+                    path2 += [(i, y)]
+
+                # Path to right edge
+                temp_x = x
+                temp_y = y
+
+                while temp_y < self.length:
+                    path3 += [(temp_x, temp_y)]
+                    temp_x += 1
+                    temp_y += 1
+
+            # Starting position at left edge
+            elif y == 0:
+                # Path to top edge
+                temp_x = x
+                temp_y = y
+
+                while temp_x >= 0:
+                    path1 += [(temp_x, temp_y)]
+                    temp_x -= 1
+                    temp_y += 1
+
+                # Path to right edge
+                for i in range(self.length):
+                    path2 += [(x, i)]
+
+                # Path to bottom edge
+                temp_x = x
+                temp_y = y
+
+                while temp_x < self.length:
+                    path3 += [(temp_x, temp_y)]
+                    temp_x += 1
+                    temp_y += 1
+
+            # Starting position at right edge
+            elif y == self.length - 1:
+                # Path to top edge
+                temp_x = x
+                temp_y = y
+
+                while temp_x >= 0:
+                    path1 += [(temp_x, temp_y)]
+                    temp_x -= 1
+                    temp_y -= 1
+
+                # Path to left edge
+                for i in range(self.length):
+                    path2 += [(x, i)]
+
+                # Path to bottom edge
+                temp_x = x
+                temp_y = y
+
+                while temp_x < self.length:
+                    path3 += [(temp_x, temp_y)]
+                    temp_x += 1
+                    temp_y -= 1
+
+                # Reverse any path that may needs be
+                path2.reverse()
+
+            # case of starting point on the bottom edge
+            elif x == self.length - 1:
+                # Path to left edge
+                temp_x = x
+                temp_y = y
+
+                while temp_y >= 0:
+                    path1 += [(temp_x, temp_y)]
+                    temp_x -= 1
+                    temp_y -= 1
+
+                # Path to top edge
+                for i in range(self.length):
+                    path2 += [(i, y)]
+
+                # Path to right edge
+                temp_x = x
+                temp_y = y
+
+                while temp_y < self.length:
+                    path3 += [(temp_x, temp_y)]
+                    temp_x -= 1
+                    temp_y += 1
+
+                # Reverse any path that may needs be
+                path2.reverse()
+
+        self.paths = [path1, path2, path3]
+        self.paths_full = [path1, path2, path3]
+
+        # Create a list of strings for each path
+        path1_res = []
+        path2_res = []
+        path3_res = []
+
+        # Checking if the paths are full if they do not contain an empty string
+        for coord in self.paths[0]:
+            if " " in self.matrix[coord]:
+                path1_res.append(self.matrix[coord])
+        for coord in self.paths[1]:
+            if " " in self.matrix[coord]:
+                path2_res.append(self.matrix[coord])
+        for coord in self.paths[2]:
+            if " " in self.matrix[coord]:
+                path3_res.append(self.matrix[coord])
+
+        try:
+            if not path1_res:
+                self.paths.pop(0)
+            if not path2_res:
+                self.paths.pop(-2)
+            if not path3_res:
+                self.paths.pop(1)
+        except IndexError:
+            self.paths = []
+
+    def get_selected_path(self) -> int:
+        """Get selected path from player"""
+        temp_board = np.full((self.length, self.length), " ", dtype='U1')
+        temp_colour_map = self.set_colour_map()
+
+        # Labelling each path with its corresponding character and assign each coordinate with its colour
+        end_path_numbering = 1
+
+        if not self.paths:
+            for path in self.paths_full:
+                for coord in path:
+                    temp_colour_map[coord] = "RED"
+        else:
+            for path in self.paths:
+                for coord in path:
+                    temp_colour_map[coord] = "GREEN"
+
+                    # Labelling the succeeding position with an dot
+                    temp_board[coord] = "•"
+
+                # Labelling the end positions with an integer to indicate selection number
+                temp_board[path[-1]] = str(end_path_numbering)
+                end_path_numbering += 1
+
+        # Assign the first cell with its colour
+        temp_colour_map[self.starting_position] = "YELLOW"
+
+        if not self.paths:
+            self.display_game_title()
+            self.display_board(None, temp_colour_map)
+            print(Fore.WHITE + Style.BRIGHT + "Starting Position: " + Fore.RED + Style.BRIGHT + "All available paths are full! Select another starting position!")
+            return 2
+        else:
+            self.display_game_title()
+            self.display_board(temp_board, temp_colour_map)
+
+            try:
+                # Note: inputs are based on zero-based numbering due to the coordinate system of using zero-based numbering
+                user_input = int(input(Fore.WHITE + Style.BRIGHT + "Type path number: "))
+
+                if user_input == 0:
+                    return 0
+                elif user_input == 4:
+                    return 1
+                elif 0 < user_input <= len(self.paths):
+                    self.selected_path = self.paths[user_input - 1]
+                    self.display_selected_path()
+                else:
+                    clear_screen(0)
+                    self.display_game_title()
+                    self.display_board(temp_board, temp_colour_map)
+                    print(Fore.WHITE + Style.BRIGHT + "Type path number: " + Fore.RED + Style.BRIGHT + "Invalid path number!")
+                    clear_screen()
+                    return self.get_selected_path()
+            except ValueError:
+                clear_screen(0)
+                self.display_game_title()
+                self.display_board(temp_board, temp_colour_map)
+                print(Fore.WHITE + Style.BRIGHT + "Type path number: " + Fore.RED + Style.BRIGHT + "Invalid path number!")
+                clear_screen()
+                return self.get_selected_path()
+
+    def display_selected_path(self, time=0) -> None:
+        """Display the selected path."""
+        temp_board = np.full((self.length, self.length), " ", dtype='U1')
+        temp_colour_map = self.set_colour_map()
+
+        # Labelling each path with its corresponding character and assign each coordinate with its colour
+        for coord in self.selected_path:
+            if self.matrix[coord] == " ":
+                temp_board[coord] = "•"
+            else:
+                temp_board[coord] = self.matrix[coord]
+
+            temp_colour_map[coord] = "GREEN"
+
+        # Assign the first cell with its colour
+        temp_colour_map[self.starting_position] = "YELLOW"
+
+        # Print the board
+        clear_screen(time)
+        self.display_game_title(False, False, False, True)
+        self.display_board(temp_board, temp_colour_map)
+
+    def display_game_title(self, is_draw=False, there_is_winner=False, has_resigned=False, display_used_words=False) -> None:
+        """Display the game title."""
+        if is_draw:
+            print(Fore.WHITE + Style.BRIGHT + " VS ".join([f"{i['name']} ({i['difficulty']})" if i['difficulty'] is not None else f"{i['name']}" for i in self.players]), sep='', end='')
+            print(f"\nGame: {self.game_counter} | Turn: {self.turn_counter} | Draw!\nGame {self.game_counter} has ended! | Game Duration: {self.game_duration}")
+        elif there_is_winner:
+            print(Fore.WHITE + Style.BRIGHT + " VS ".join([f"{i['name']} ({i['difficulty']})" if i['difficulty'] is not None else f"{i['name']}" for i in self.players]), sep='', end='')
+            print(f"\nGame: {self.game_counter} | Turn: {self.turn_counter} | {self.winner} won!\nGame {self.game_counter} has ended! | Game Duration: {self.game_duration}")
+        elif has_resigned:
+            print(Fore.WHITE + Style.BRIGHT + " VS ".join([f"{i['name']} ({i['difficulty']})" if i['difficulty'] is not None else f"{i['name']}" for i in self.players]), sep='', end='')
+            print(f"\nGame: {self.game_counter} | Turn: {self.turn_counter} | {self.player}'s Turn")
+            print(f"{self.player} has resigned!")
+        elif display_used_words:
+            print(Fore.WHITE + Style.BRIGHT + " VS ".join([f"{i['name']} ({i['difficulty']})" if i['difficulty'] is not None else f"{i['name']}" for i in self.players]), sep='', end='')
+            print(f"\nGame: {self.game_counter} | Turn: {self.turn_counter} | {self.player}'s Turn")
+
+            if self.used_words is not None:
+                print(Fore.WHITE + Style.BRIGHT + "Word(s) used: " + Fore.RED + Style.BRIGHT + ', '.join(self.used_words))
+            else:
+                print(Fore.WHITE + Style.BRIGHT + "Word(s) used:")
+        else:
+            print(Fore.WHITE + Style.BRIGHT + " VS ".join([f"{i['name']} ({i['difficulty']})" if i['difficulty'] is not None else f"{i['name']}" for i in self.players]), sep='', end='')
+            print(f"\nGame: {self.game_counter} | Turn: {self.turn_counter} | {self.player}'s Turn")
+
+            if self.turn_counter == 0:
+                print(f"Game {self.game_counter} has started!")
+            else:
+                print(f"{self.previous_player} placed down {self.word}")
+
+    def display_board(self, board=None, colour_map=None, get_str_board=False, computer_player=False) -> int:
+        """Display the board."""
+        def chunks(data: Dict[Tuple[int, int], str], SIZE=10000) -> Generator[Dict[Tuple[int, int], str], any, None]:
+            """Divide the data into chunks."""
+            itt = iter(data)
+
+            for i in range(0, len(data), SIZE):
+                yield {k: data[k] for k in it.islice(itt, SIZE)}
+
+        if colour_map is None:
+            colour_map = self.colour_map
+
+        if board is None:
+            board = self.matrix
+
+        # Colour the previous word placed by the player
+        if self.previous_selected_path is not None:
+            for key in self.colour_map:
+                self.colour_map[key] = "WHITE"
+
+            for coord in self.previous_selected_path:
+                self.colour_map[coord] = "CYAN"
+
+                if computer_player:
+                    self.colour_map[coord] = "GREEN"
+
+            if computer_player:
+                self.colour_map[self.previous_selected_path[0]] = "YELLOW"
+
+        # Create a list of chunks
+        chunks_list = []
+
+        # Create chunks of the colour map and store them in the chunks list
+        for item in chunks(colour_map, self.length):
+            chunks_list.append(item)
+
+        # Display the game board
+        if board is None:
+            board = self.matrix
+
+        # Create representation of the board
+        str_board = Fore.WHITE + Style.BRIGHT + " "
+        str_board += "  "
+
+        # Labelling top columns
+        for column_number in range(self.length):
+            if column_number < 9:
+                str_board += f"   {column_number + 1}"
+            else:
+                str_board += f"  {column_number + 1}"
+
+        str_board +="\n    ┌───┬─"
+
+        for _ in range(self.length - 2):
+            str_board+= "──┬─"
+
+        str_board += "──┐\n"
+
+        # Labelling left rows
+        lines = 0
+
+        for chunk in chunks_list:
+            if chunks_list.index(chunk) < 9:
+                str_board += f"  {str(chunks_list.index(chunk) + 1)} "
+            else:
+                str_board += f" {str(chunks_list.index(chunk) + 1)} "
+
+            # Assign each string to its corresponding colour depending on the coordinates
+            for coord, colour in chunk.items():
+                set_colour = getattr(Fore, colour)
+                str_board += Fore.WHITE + "│" + set_colour + f" {board[coord]} " + Fore.WHITE
+
+            # Labelling right rows
+            str_board += f"│ {str(chunks_list.index(chunk) + 1)}\n    ├─"
+
+            for _ in range(self.length - 1):
+                str_board += "──┼─"
+
+            if lines < self.length - 1:
+                str_board += "──┤\n"
+                lines += 1
+            else:
+                str_board += "\r"
+
+        # Labelling bottom columns
+        str_board +="    └───┴─"
+
+        for _ in range(self.length - 2):
+            str_board+= "──┴─"
+
+        str_board += "──┘\n   "
+
+        for column_number in range(self.length):
+            if column_number < 9:
+                str_board += f"   {column_number + 1}"
+            else:
+                str_board += f"  {column_number + 1}"
+
+        if get_str_board:
+            return str_board
+        else:
+            print(f"\n{str_board}\n")
+
+    def place_word(self, word: str) -> None:
+        """Place the word onto the game board."""
+        self.word = word
+        self.previous_selected_path = self.selected_path
+
+        for coord in self.previous_selected_path:
+            self.matrix[coord] = self.word[self.previous_selected_path.index(coord)]
 
 def main():
     """The program."""
@@ -937,13 +1609,12 @@ def main():
         clear_screen(0)
         print(Fore.WHITE + Style.BRIGHT + f"{'-' * 32}\n{__title__} v{__version__}\nWritten in Python {PY_VERSION}\nDeveloped by {__author__}\n{'-' * 32}")
         print("Consult the README file on how to use this program.\n")
-        print("[1] Check files to find board size")
-        print("[2] Display player statistics")
-        print("[3] Display letter frequency bar graph")
-        print("[4] Display word length frequency bar graph")
-        print("[5] Display square usage heatmap")
-        print("[6] View README file")
-        print("[7] Exit")
+
+        menu_item = ["Check files to find board size", "Display player statistics", "Display letter frequency bar graph", "Display word length frequency bar graph", "Display square usage heatmap", "Watch replays", "View README file", "Exit"]
+
+        for i in menu_item:
+            print([menu_item.index(i) + 1], i)
+
         selection = input("\nSelection: ")
 
         if selection == "1":
@@ -957,6 +1628,9 @@ def main():
         elif selection == "5":
             display_square_usage_heatmap()
         elif selection == "6":
+            clear_screen(0)
+            open_replay()
+        elif selection == "7":
             check_if_file_exists('README.txt')
             subprocess.call(['cmd', '/c', 'start', '/max', 'README.txt'])
         elif selection == "7":

@@ -1,4 +1,4 @@
-Word Battle Analytic Tool v1
+Word Battle Analytic Tool v1.1
 --------------------------------------------------------------------------------
 Thank you for downloading this program!
 
@@ -24,8 +24,8 @@ Depending on your Python verion, you may click on the py file to run the program
 
 HOW TO USE THE PROGRAM
 --------------------------------------------------------------------------------
-Move the desired replay files (.wbr files) into the "Data To Analyse" folder for
-the program to analyse.
+Move the desired replay files (.wbr files) into the "Replays" folder or copy the 
+"Replays" folder for the program to analyse.
 
 If this folder is missing, the game will automatically generate a new folder if
 any attempt at analysing is made.
@@ -37,6 +37,7 @@ The following are the tools which will help produce the data required.
 [3] Display letter frequency bar graph
 [4] Display word length frequency bar graph
 [5] Display square usage heatmap
+[6] Watch replays
 
 Option [1] will check the contents of the file to determine the board size, the
 number of players, the game mode and game duration. This option will require an
@@ -59,10 +60,17 @@ and the word length it is associated with.
 Option [5] will display a heatmap describing the probability of a square being
 occupied by a letter.
 
+Option [6] will replay games.
+
+UPDATE V1.1
+--------------------------------------------------------------------------------
+17/03/2021 Implemented a replay function
+           Replaced "Data to Analyse" folder to "Replays" folder
+
 CONTACT INFORMATION
 --------------------------------------------------------------------------------
 If you have any questions, feedback or if you experience any bugs or issues when
-running the program, feel free to contact me at stadragondev@gmail.com
+running the program, feel free to contact me at jorleef@gmail.com
 
 LICENSE
 --------------------------------------------------------------------------------
