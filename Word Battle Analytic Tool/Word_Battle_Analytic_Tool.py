@@ -1633,7 +1633,7 @@ def main():
         elif selection == "7":
             check_if_file_exists('README.txt')
             subprocess.call(['cmd', '/c', 'start', '/max', 'README.txt'])
-        elif selection == "7":
+        elif selection == "8":
             sys.exit(0)
 
 
